@@ -5,6 +5,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class ParkourSystem extends JavaPlugin {
 
     private static ParkourSystem instance;
+    private ParkourManager parkourManager;
 
     @Override
     public void onEnable(){
@@ -12,6 +13,8 @@ public class ParkourSystem extends JavaPlugin {
         instance = this;
         getConfig().options().copyDefaults(true);
         saveConfig();
+
+        this.parkourManager = new ParkourManager();
     }
 
     @Override
