@@ -3,7 +3,9 @@ package me.streafe.parkour.parkour;
 import me.streafe.parkour.ParkourSystem;
 import me.streafe.parkour.utils.Utils;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.BlockState;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,8 +22,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ParkourManager implements Listener{
 
-    private List<Parkour> parkourList;
-    private Map<UUID,Parkour> tempList;
+    public List<Parkour> parkourList;
+    public Map<UUID,Parkour> tempList;
 
     public ParkourManager(){
         this.parkourList = new ArrayList<>();
@@ -89,7 +91,7 @@ public class ParkourManager implements Listener{
     }
 
     public Parkour getParkourByCreator(UUID uuid){
-        for(Map.Entry<UUID,Parkour> entry : tempList.entrySet()){
+        for(Map.Entry<UUID,Parkour> entry : ParkourSystem.getInstance().getParkourManager().tempList.entrySet()){
             if(entry.getKey().equals(uuid)){
                 return entry.getValue();
             }
@@ -98,7 +100,7 @@ public class ParkourManager implements Listener{
     }
 
     public boolean playerTempMode(UUID uuid){
-        for(Map.Entry<UUID,Parkour> entry : tempList.entrySet()){
+        for(Map.Entry<UUID,Parkour> entry : ParkourSystem.getInstance().getParkourManager().tempList.entrySet()){
             if(entry.getKey().equals(uuid)){
                 return true;
             }
@@ -126,23 +128,40 @@ public class ParkourManager implements Listener{
                 return;
             }
         }
-        this.parkourList.add(parkour);
+        ParkourSystem.getInstance().getParkourManager().parkourList.add(parkour);
         creator.sendMessage(Utils.translate("&aParkour &b" + parkour.getName() + " &asuccessfully saved."));
         creator.getLocation().getWorld().playSound(creator.getLocation(), Sound.NOTE_PLING,2f,1f);
-        tempList.remove(creator.getUniqueId());
+        ParkourSystem.getInstance().getParkourManager().tempList.remove(creator.getUniqueId());
     }
 
     @EventHandler
-    public void onPlayerMove(PlayerMoveEvent ev){
-        if(parkourList.size() > 0){
-            parkourList.forEach(e -> {
-                if(e.getPlayerList().containsKey(ev.getPlayer().getUniqueId())){
-                    ev.getPlayer().sendMessage(Utils.translate("&cSheeeeesh"));
-                    e.startParkourChecker(ev.getPlayer().getUniqueId());
-                    e.checkPlayerPosition(ev.getPlayer().getUniqueId());
-                    e.checkpointChecker(ev.getPlayer().getUniqueId());
+    public void onPlayerMoveStart(PlayerInteractEvent ev){
+        if(ev.getAction().equals(Action.PHYSICAL)){
+            if(ev.getClickedBlock().getType() == Material.IRON_PLATE){
+                if(ParkourSystem.getInstance().getParkourManager().getParkourList().size() > 0){
+                    ParkourSystem.getInstance().getParkourManager().getParkourList().forEach(e -> {
+                        if(e.getPlayerList().containsKey(ev.getPlayer().getUniqueId())){
+                            e.startParkourChecker(ev.getPlayer().getUniqueId());
+                            e.checkpointChecker(ev.getPlayer().getUniqueId());
+                        }
+                    });
                 }
-            });
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerMoveFinish(PlayerInteractEvent ev){
+        if(ev.getAction().equals(Action.PHYSICAL)){
+            if(ev.getClickedBlock().getType() == Material.GOLD_PLATE){
+                if(ParkourSystem.getInstance().getParkourManager().getParkourList().size() > 0){
+                    ParkourSystem.getInstance().getParkourManager().getParkourList().forEach(e -> {
+                        if(e.getPlayerList().containsKey(ev.getPlayer().getUniqueId())){
+                            e.checkpointChecker(ev.getPlayer().getUniqueId());
+                        }
+                    });
+                }
+            }
         }
     }
 

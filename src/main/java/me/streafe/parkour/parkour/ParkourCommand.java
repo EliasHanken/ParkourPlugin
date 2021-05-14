@@ -75,6 +75,7 @@ public class ParkourCommand implements CommandExecutor {
                     }
 
                     else if(args[0].equalsIgnoreCase("setCheckPoint")){
+                        player.sendMessage(parkourManager.getTempList().toString());
                         Parkour parkour = parkourManager.getTempList().get(player.getUniqueId());
                         if(parkourManager.playerTempMode(player.getUniqueId()) && parkourManager.getParkourByCreator(player.getUniqueId()).getName().equalsIgnoreCase(args[1])){
                             parkour.getCheckpoints().add(player.getLocation());
