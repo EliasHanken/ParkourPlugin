@@ -1,7 +1,6 @@
 package me.streafe.parkour.parkour;
 
 import me.streafe.parkour.ParkourSystem;
-import me.streafe.parkour.parkour.Parkour;
 import me.streafe.parkour.utils.Utils;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -9,12 +8,15 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ParkourManager implements Listener{
 
@@ -144,11 +146,49 @@ public class ParkourManager implements Listener{
         }
     }
 
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent e){
+        Player player = e.getPlayer();
+        if(e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK){
+            if(player.getItemInHand() != null){
+                if(player.getItemInHand().hasItemMeta()){
+                    if(e.getItem().getItemMeta().getDisplayName().contains("Exit parkour")){
+                        //getParkourByUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
+                        if(getParkourByUUID(player.getUniqueId()) != null){
+                            getParkourByUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
+                        }
+                    }else if(e.getItem().getItemMeta().getDisplayName().contains("Last checkpoint")){
+                        player.sendMessage(Utils.translate("&cCheckpoints are under development."));
+                    }
+                }
+            }
+        }
+    }
+
     public List<Parkour> getParkourList(){
         return this.parkourList;
     }
 
     public Map<UUID, Parkour> getTempList() {
         return tempList;
+    }
+
+    public boolean isInParkour(UUID uuid){
+        AtomicBoolean isInParkour = new AtomicBoolean(false);
+        ParkourSystem.getInstance().getParkourManager().getParkourList().stream().forEach(e ->{
+            if(e.getPlayerList().containsKey(uuid)){
+                isInParkour.set(true);
+            }
+        });
+        return isInParkour.get();
+    }
+
+    public Parkour getParkourByUUID(UUID uuid){
+        for(Parkour parkour : ParkourSystem.getInstance().getParkourManager().getParkourList()){
+            if(parkour.getPlayerList().containsKey(uuid)){
+                return parkour;
+            }
+        }
+        return null;
     }
 }

@@ -7,6 +7,8 @@ import org.bukkit.Location;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Utils {
 
@@ -35,6 +37,23 @@ public class Utils {
                 + ":" + round(location.getZ(),2)
                 + ":" + round(location.getYaw(),3)
                 + ":" + round(location.getPitch(),3);
+    }
+
+    public static String locationToString(List<Location> locationList){
+        String s = "";
+        for(Location location : locationList){
+            s += locationToString(location) + ",";
+        }
+        return s;
+    }
+
+    public static List<Location> readMultipleLocFromString(String string){
+        String[] s = string.split(",");
+        List<Location> locations = new ArrayList<>();
+        for(String locString : s){
+            locations.add(readLocFromString(locString));
+        }
+        return locations;
     }
 
     public static Location readLocFromString(String string){

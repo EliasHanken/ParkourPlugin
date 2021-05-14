@@ -7,7 +7,9 @@ import me.streafe.parkour.utils.Utils;
 import org.bukkit.*;
 import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.Serializable;
 import java.util.*;
@@ -22,6 +24,8 @@ public class SimpleParkour implements Parkour{
     private Map<UUID,Double> playersList;
     private Map<UUID,CounterRunnable> counterRunnableMap;
 
+    private Map<UUID,ItemStack[]> currentItems;
+
     public SimpleParkour(Location start, List<Location> checkpoints, Location finish, String name){
         this.checkpoints = checkpoints;
         this.start = start;
@@ -29,7 +33,7 @@ public class SimpleParkour implements Parkour{
         this.counterRunnableMap = new HashMap<>();
         this.playersList = new HashMap<>();
         this.name = name;
-
+        this.currentItems = new HashMap<>();
     }
 
     @Override
@@ -67,9 +71,17 @@ public class SimpleParkour implements Parkour{
         Bukkit.getPlayer(uuid).getWorld().playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.ENDERMAN_TELEPORT,1f,1f);
 
         playersList.remove(uuid);
-        counterRunnableMap.get(uuid).cancel();
+        if(counterRunnableMap.get(uuid) != null){
+            counterRunnableMap.get(uuid).cancel();
+        }
         counterRunnableMap.remove(uuid);
-        removePlayer(uuid);
+
+        if(currentItems.containsKey(uuid)){
+            Bukkit.getPlayer(uuid).getInventory().clear();
+            Bukkit.getPlayer(uuid).getInventory().setContents(currentItems.get(uuid));
+            Bukkit.getPlayer(uuid).updateInventory();
+            currentItems.remove(uuid);
+        }
     }
 
     @Override
@@ -97,6 +109,18 @@ public class SimpleParkour implements Parkour{
     @Override
     public void giveItems(UUID uuid) {
 
+        ItemStack doorItem = new ItemStack(Material.WOOD_DOOR);
+        ItemMeta doorMeta = doorItem.getItemMeta();
+        doorMeta.setDisplayName(Utils.translate("&cExit parkour"));
+        doorItem.setItemMeta(doorMeta);
+
+        ItemStack checkpoint = new ItemStack(Material.IRON_DOOR);
+        ItemMeta checkMeta = checkpoint.getItemMeta();
+        checkMeta.setDisplayName(Utils.translate("&bLast checkpoint"));
+        checkpoint.setItemMeta(checkMeta);
+
+        Bukkit.getPlayer(uuid).getInventory().setItem(8,doorItem);
+        Bukkit.getPlayer(uuid).getInventory().setItem(0,checkpoint);
     }
 
     @Override
@@ -165,12 +189,20 @@ public class SimpleParkour implements Parkour{
         Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&eReward : &a1 Diamond"));
     }
 
+    private Map<UUID,CounterRunnable> getCounterRunnableMap(){
+        return this.counterRunnableMap;
+    }
+
     @Override
     public void addPlayer(UUID uuid) {
         if(!playersList.containsKey(uuid)){
-            getPlayerList().put(uuid,null);
+            getPlayerList().put(uuid,0.0);
+            getCounterRunnableMap().put(uuid,null);
             Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&eYou can now start the parkour :)"));
             Bukkit.getPlayer(uuid).getWorld().playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.NOTE_PLING,1f,1.5f);
+            this.currentItems.put(uuid,Bukkit.getPlayer(uuid).getInventory().getContents());
+            Bukkit.getPlayer(uuid).getInventory().clear();
+            giveItems(uuid);
         }else{
             Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&cParkour already started"));
             Bukkit.getPlayer(uuid).getWorld().playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.NOTE_PLING,1f,0.5f);
@@ -179,6 +211,6 @@ public class SimpleParkour implements Parkour{
 
     @Override
     public void removePlayer(UUID uuid) {
-        getPlayerList().remove(uuid);
+        endParkour(uuid);
     }
 }

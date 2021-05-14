@@ -1,14 +1,16 @@
 package me.streafe.parkour.playermanagement;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import me.streafe.parkour.parkour.Parkour;
+import me.streafe.parkour.utils.Utils;
+
+import java.sql.*;
 
 public class SQL {
 
     private String host,user,password,database;
     private int port;
     private Connection connection = null;
+    private Statement statement;
 
     /**
      *
@@ -45,6 +47,29 @@ public class SQL {
      */
     public Connection getConnection(){
         return this.connection;
+    }
+
+    public void createDefaultTables(){
+        try{
+            statement = connection.createStatement();
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS `parkour` (`name` varchar(24), `startPos` varchar(255), `finishPos` varchar(255), `checkpoints` TEXT)");
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS `parkour_runs` (`parkour_name` varchar(36), `uuid` varchar(36), `time` varchar(255), `date` varchar(255))");
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void insertParkour(Parkour parkour){
+        try{
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM `parkour`");
+            ResultSet rs = statement.executeQuery();
+            while(!rs.next()){
+                statement.executeUpdate("INSERT INTO `parkour` (`name`, `startPos`, `finishPos`, `checkpoints`) VALUES " +
+                        "('"+parkour.getName()+"','"+ Utils.locationToString(parkour.getStart())+"','"+Utils.locationToString(parkour.getFinish())+"','"+Utils.locationToString(parkour.getCheckpoints())+"')");
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
     }
 
 }
