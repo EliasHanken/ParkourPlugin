@@ -123,12 +123,12 @@ public class SimpleParkour implements Parkour{
         doorMeta.setDisplayName(Utils.translate("&cExit parkour"));
         doorItem.setItemMeta(doorMeta);
 
-        ItemStack checkpoint = new ItemStack(Material.IRON_DOOR);
+        ItemStack checkpoint = new ItemStack(Material.PAPER);
         ItemMeta checkMeta = checkpoint.getItemMeta();
         checkMeta.setDisplayName(Utils.translate("&bLast checkpoint"));
         checkpoint.setItemMeta(checkMeta);
 
-        Bukkit.getPlayer(uuid).getInventory().setItem(8,doorItem);
+        Bukkit.getPlayer(uuid).getInventory().setItem(1,doorItem);
         Bukkit.getPlayer(uuid).getInventory().setItem(0,checkpoint);
     }
 

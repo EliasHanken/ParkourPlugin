@@ -150,6 +150,7 @@ public class ParkourManager implements Listener{
         }
     }
 
+    /*
     @EventHandler
     public void onPlayerMoveFinish(PlayerInteractEvent ev){
         if(ev.getAction().equals(Action.PHYSICAL)){
@@ -165,6 +166,8 @@ public class ParkourManager implements Listener{
         }
     }
 
+     */
+
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e){
         Player player = e.getPlayer();
@@ -172,11 +175,13 @@ public class ParkourManager implements Listener{
             if(player.getItemInHand() != null){
                 if(player.getItemInHand().hasItemMeta()){
                     if(e.getItem().getItemMeta().getDisplayName().contains("Exit parkour")){
+                        e.setCancelled(true);
                         //getParkourByUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
                         if(getParkourByUUID(player.getUniqueId()) != null){
                             getParkourByUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
                         }
                     }else if(e.getItem().getItemMeta().getDisplayName().contains("Last checkpoint")){
+                        e.setCancelled(true);
                         player.sendMessage(Utils.translate("&cCheckpoints are under development."));
                     }
                 }
