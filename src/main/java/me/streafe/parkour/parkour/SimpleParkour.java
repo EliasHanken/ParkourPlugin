@@ -3,14 +3,16 @@ package me.streafe.parkour.parkour;
 import me.streafe.parkour.ParkourSystem;
 import me.streafe.parkour.parkour.Parkour;
 import me.streafe.parkour.utils.CounterRunnable;
+import me.streafe.parkour.utils.Utils;
 import org.bukkit.*;
+import org.bukkit.entity.Item;
+import org.bukkit.event.EventHandler;
+import org.bukkit.inventory.ItemStack;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.io.Serializable;
+import java.util.*;
 
-public class SimpleParkour implements Parkour {
+public class SimpleParkour implements Parkour{
 
     private List<Location> checkpoints;
     private Location finish;
@@ -25,12 +27,14 @@ public class SimpleParkour implements Parkour {
         this.start = start;
         this.finish = finish;
         this.counterRunnableMap = new HashMap<>();
+        this.playersList = new HashMap<>();
         this.name = name;
 
     }
 
     @Override
     public void startParkourChecker(UUID uuid) {
+        Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&cSheeesh"));
         if(Bukkit.getPlayer(uuid).getLocation().getBlock().getType() == Material.GOLD_PLATE &&
         Bukkit.getPlayer(uuid).getLocation().equals(start)){
             if(counterRunnableMap.containsKey(uuid)){
@@ -65,6 +69,7 @@ public class SimpleParkour implements Parkour {
         playersList.remove(uuid);
         counterRunnableMap.get(uuid).cancel();
         counterRunnableMap.remove(uuid);
+        removePlayer(uuid);
     }
 
     @Override
@@ -110,6 +115,7 @@ public class SimpleParkour implements Parkour {
     public void finish(UUID uuid) {
         this.playersList.put(uuid,counterRunnableMap.get(uuid).getTimeAndStop());
         Bukkit.getPlayer(uuid).sendMessage(ChatColor.translateAlternateColorCodes('&',"&aParkour finished in &e" + counterRunnableMap.get(uuid) + " &aseconds!"));
+        giveReward(uuid);
     }
 
     @Override
@@ -151,5 +157,28 @@ public class SimpleParkour implements Parkour {
     @Override
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public void giveReward(UUID uuid) {
+        Bukkit.getPlayer(uuid).getInventory().addItem(new ItemStack(Material.DIAMOND));
+        Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&eReward : &a1 Diamond"));
+    }
+
+    @Override
+    public void addPlayer(UUID uuid) {
+        if(!playersList.containsKey(uuid)){
+            getPlayerList().put(uuid,null);
+            Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&eYou can now start the parkour :)"));
+            Bukkit.getPlayer(uuid).getWorld().playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.NOTE_PLING,1f,1.5f);
+        }else{
+            Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&cParkour already started"));
+            Bukkit.getPlayer(uuid).getWorld().playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.NOTE_PLING,1f,0.5f);
+        }
+    }
+
+    @Override
+    public void removePlayer(UUID uuid) {
+        getPlayerList().remove(uuid);
     }
 }

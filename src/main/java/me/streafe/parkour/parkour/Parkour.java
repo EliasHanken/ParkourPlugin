@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public interface Parkour {
+public interface Parkour{
 
     void startParkourChecker(UUID uuid);
     void checkpointChecker(UUID uuid);
@@ -26,5 +26,7 @@ public interface Parkour {
     void setFinish(Location location);
     String getName();
     void setName(String name);
-
+    void giveReward(UUID uuid);
+    void addPlayer(UUID uuid);
+    void removePlayer(UUID uuid);
 }
