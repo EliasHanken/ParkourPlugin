@@ -1,5 +1,7 @@
 package me.streafe.parkour;
 
+import me.streafe.parkour.parkour.ParkourCommand;
+import me.streafe.parkour.parkour.ParkourManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ParkourSystem extends JavaPlugin {
@@ -13,8 +15,11 @@ public class ParkourSystem extends JavaPlugin {
         instance = this;
         getConfig().options().copyDefaults(true);
         saveConfig();
-
         this.parkourManager = new ParkourManager();
+
+        getServer().getPluginManager().registerEvents(new ParkourManager(),this);
+
+        getCommand("parkour").setExecutor(new ParkourCommand());
     }
 
     @Override
@@ -31,6 +36,9 @@ public class ParkourSystem extends JavaPlugin {
     }
 
 
+    public ParkourManager getParkourManager() {
+        return parkourManager;
+    }
 
 
 }

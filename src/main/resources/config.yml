@@ -1,0 +1,17 @@
+items:
+  exit:
+    name:
+      - "&cExit & return to the start"
+    item_type:
+      - "BED"
+  reset:
+    name:
+      - "&cReset the score and teleport back"
+    item_type:
+      - "DOOR"
+  top_scores:
+    name:
+      - "&eSee the current top scores"
+    item_type:
+      - "CLOCK"
+parkours:

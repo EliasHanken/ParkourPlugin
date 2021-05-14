@@ -1,0 +1,10 @@
+name: Parkour
+version: 1.0
+main: me.streafe.parkour.ParkourSystem
+author: krilux
+
+commands:
+  parkour:
+    usage: /<command>
+    description: The main parkour plugin for the server
+    default: true
