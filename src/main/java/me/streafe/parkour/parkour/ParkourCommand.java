@@ -95,9 +95,18 @@ public class ParkourCommand implements CommandExecutor {
                             }
                         });
                         if(!foundParkour[0]){
-                            player.sendMessage(Utils.translate("&cParkour &b"+args[1]+"&c under maintenance"));
+                            player.sendMessage(Utils.translate("&cParkour &b"+args[1]+"&c is under maintenance."));
                         }
                         return true;
+                    }
+
+                    else if(args[0].equalsIgnoreCase("delete")) {
+                        if (parkourManager.deleteParkour(args[1])) {
+                            player.sendMessage(Utils.translate("&aParkour deleted -> &b" + args[1]));
+                        } else {
+                            player.sendMessage(Utils.translate("&aParkour not deleted -> &b" + args[1] + "\nCould not find a parkour with that name."));
+                        }
+
                     }
 
 
@@ -118,9 +127,14 @@ public class ParkourCommand implements CommandExecutor {
                     }
                     return true;
                 }
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&',"&c" +
-                        "Invalid command:\n" +
-                        "&eTry /parkour \n&7(&e1&7)&e<setStart>/<setCheckpoint>/\n&7(&e1&7)&e<setFinish>/<create>/\n&7(&e1&7)&e<delete>/<save>\n&7(&e1&7)&e<list>\n&7(&e2&7)&e<name>"));
+                player.sendMessage(Utils.translate("&7--[&aParkour&7]--\n" +
+                        "&e/parkour create (name) &7creates a temporary parkour instance.\n" +
+                        "&e/parkour setStart (name) &7sets the start point for the parkour.\n" +
+                        "&e/parkour setCheckPoint (name) &7sets the checkpoints the parkour. Multiple locations is possible.\n" +
+                        "&e/parkour setFinish (name) &7sets the parkour finish point.\n" +
+                        "&e/parkour save &e(name) &7saves a parkour.\n" +
+                        "&e/parkour &cdelete &e(name) &7deletes a parkour.\n" +
+                        "&e/parkour setLeaderboard &7sets the leaderboard for the top scores.\n"));
 
             }
         }

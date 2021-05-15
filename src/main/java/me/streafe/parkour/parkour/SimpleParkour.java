@@ -63,10 +63,10 @@ public class SimpleParkour implements Parkour{
 
     private void endParkour(UUID uuid) {
         Bukkit.getPlayer(uuid).sendMessage(ChatColor.translateAlternateColorCodes('&',"&cParkour cancelled, returned to the start"));
-        Location tempLoc = start;
+        Location tempLoc = new Location(start.getWorld(),start.getX(),start.getY(),start.getZ(),start.getYaw(),start.getPitch());
+        tempLoc.setX(tempLoc.getX() + 1);
+        tempLoc.setZ(tempLoc.getX() + 1);
         //So you dont teleport to the freaking pressureplate and start again.
-        tempLoc.setX(start.getX() + 1);
-        tempLoc.setZ(start.getZ() + 1);
         Bukkit.getPlayer(uuid).teleport(tempLoc);
         Bukkit.getPlayer(uuid).getWorld().playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.ENDERMAN_TELEPORT,1f,1f);
 
@@ -128,7 +128,7 @@ public class SimpleParkour implements Parkour{
         checkMeta.setDisplayName(Utils.translate("&bLast checkpoint"));
         checkpoint.setItemMeta(checkMeta);
 
-        Bukkit.getPlayer(uuid).getInventory().setItem(1,doorItem);
+        Bukkit.getPlayer(uuid).getInventory().setItem(4,doorItem);
         Bukkit.getPlayer(uuid).getInventory().setItem(0,checkpoint);
     }
 

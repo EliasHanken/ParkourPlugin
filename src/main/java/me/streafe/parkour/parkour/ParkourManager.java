@@ -5,20 +5,18 @@ import me.streafe.parkour.utils.Utils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.block.BlockState;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ParkourManager implements Listener{
 
@@ -177,8 +175,8 @@ public class ParkourManager implements Listener{
                     if(e.getItem().getItemMeta().getDisplayName().contains("Exit parkour")){
                         e.setCancelled(true);
                         //getParkourByUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
-                        if(getParkourByUUID(player.getUniqueId()) != null){
-                            getParkourByUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
+                        if(getParkourByPlayerUUID(player.getUniqueId()) != null){
+                            getParkourByPlayerUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
                         }
                     }else if(e.getItem().getItemMeta().getDisplayName().contains("Last checkpoint")){
                         e.setCancelled(true);
@@ -207,12 +205,33 @@ public class ParkourManager implements Listener{
         return isInParkour.get();
     }
 
-    public Parkour getParkourByUUID(UUID uuid){
+    public Parkour getParkourByPlayerUUID(UUID uuid){
         for(Parkour parkour : ParkourSystem.getInstance().getParkourManager().getParkourList()){
             if(parkour.getPlayerList().containsKey(uuid)){
                 return parkour;
             }
         }
         return null;
+    }
+
+    public Parkour getParkourByName(String name){
+        for(Parkour parkour : ParkourSystem.getInstance().getParkourManager().getParkourList()){
+            if(parkour.getName().equalsIgnoreCase(name)){
+                return parkour;
+            }
+        }
+        return null;
+    }
+
+    public boolean deleteParkour(String name){
+        Iterator<Parkour> iterator = getParkourList().iterator();
+        while(iterator.hasNext()){
+            Parkour parkour = iterator.next();
+            if(parkour.getName().equalsIgnoreCase(name)){
+                iterator.remove();
+                return true;
+            }
+        }
+        return false;
     }
 }
