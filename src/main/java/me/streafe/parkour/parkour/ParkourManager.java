@@ -11,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
@@ -86,6 +87,7 @@ public class ParkourManager implements Listener{
             }
             yaml.options().configuration().save(file);
         }
+
     }
 
     public Parkour getParkourByCreator(UUID uuid){
@@ -148,6 +150,15 @@ public class ParkourManager implements Listener{
         }
     }
 
+    @EventHandler
+    public void onPlayerFly(PlayerToggleFlightEvent e){
+        if(ParkourSystem.getInstance().getParkourManager().isInParkour(e.getPlayer().getUniqueId())){
+            Parkour parkour = ParkourSystem.getInstance().getParkourManager().getParkourByPlayerUUID(e.getPlayer().getUniqueId());
+            parkour.removePlayer(e.getPlayer().getUniqueId(),true);
+            e.setCancelled(true);
+        }
+    }
+
     /*
     @EventHandler
     public void onPlayerMoveFinish(PlayerInteractEvent ev){
@@ -176,10 +187,14 @@ public class ParkourManager implements Listener{
                         e.setCancelled(true);
                         //getParkourByUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
                         if(getParkourByPlayerUUID(player.getUniqueId()) != null){
-                            getParkourByPlayerUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
+                            getParkourByPlayerUUID(player.getUniqueId()).removePlayer(player.getUniqueId(),false);
                         }
                     }else if(e.getItem().getItemMeta().getDisplayName().contains("Last checkpoint")){
                         e.setCancelled(true);
+                        if(getParkourByPlayerUUID(player.getUniqueId()).getPlayerCheckpoint().get(player.getUniqueId()) != null){
+                            player.teleport(getParkourByPlayerUUID(player.getUniqueId()).getPlayerCheckpoint().get(player.getUniqueId()));
+                            player.playSound(player.getLocation(),Sound.ENDERMAN_TELEPORT,1f,1f);
+                        }
                         player.sendMessage(Utils.translate("&cCheckpoints are under development."));
                     }
                 }
@@ -230,6 +245,13 @@ public class ParkourManager implements Listener{
             if(parkour.getName().equalsIgnoreCase(name)){
                 iterator.remove();
                 return true;
+            }
+            File file = new File(ParkourSystem.getInstance().getPathToPManager());
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+            for(String s : yaml.getConfigurationSection("parkours").getKeys(false)){
+                if(s.equalsIgnoreCase(name)){
+                    yaml.set("parkours."+s,null);
+                }
             }
         }
         return false;

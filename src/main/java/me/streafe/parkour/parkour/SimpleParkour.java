@@ -6,6 +6,7 @@ import me.streafe.parkour.utils.CounterRunnable;
 import me.streafe.parkour.utils.PacketUtils;
 import me.streafe.parkour.utils.Utils;
 import org.bukkit.*;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -14,6 +15,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
@@ -23,10 +26,12 @@ public class SimpleParkour implements Parkour{
     private Location finish;
     private Location start;
     private String name;
+    private LeaderboardObject leaderboardObject;
 
     private Map<UUID,Double> playersList;
     private Map<UUID,BukkitTask> counterRunnableMap;
     private Map<UUID,Boolean> hasFlight;
+    private Map<UUID,Location> playerCheckpoint;
 
     private Map<UUID,ItemStack[]> currentItems;
 
@@ -41,8 +46,12 @@ public class SimpleParkour implements Parkour{
         this.counterRunnableMap = new HashMap<>();
         this.playersList = new HashMap<>();
         this.hasFlight = new HashMap<>();
+        this.playerCheckpoint = new HashMap<>();
         this.name = name;
         this.currentItems = new HashMap<>();
+
+        Location leaderboardLoc = new Location(start.getWorld(),start.getX()+2,start.getY()+1,start.getZ()+2);
+        this.leaderboardObject = new LeaderboardObject(leaderboardLoc,name);
     }
 
     @Override
@@ -61,11 +70,17 @@ public class SimpleParkour implements Parkour{
         return this.playersList;
     }
 
-    private void endParkour(UUID uuid) {
-        Bukkit.getPlayer(uuid).sendMessage(ChatColor.translateAlternateColorCodes('&',"&cParkour cancelled, returned to the start"));
+    private void endParkour(UUID uuid,boolean flying) {
+
+        if(flying){
+            Bukkit.getPlayer(uuid).sendMessage(ChatColor.translateAlternateColorCodes('&',"&cYou started flying, parkour cancelled."));
+        }else{
+            Bukkit.getPlayer(uuid).sendMessage(ChatColor.translateAlternateColorCodes('&',"&cParkour cancelled, returned to the start"));
+        }
+
         Location tempLoc = new Location(start.getWorld(),start.getX(),start.getY(),start.getZ(),start.getYaw(),start.getPitch());
-        tempLoc.setX(tempLoc.getX() + 1);
-        tempLoc.setZ(tempLoc.getX() + 1);
+        tempLoc.setX(start.getX() + 1);
+        tempLoc.setZ(start.getZ() + 1);
         //So you dont teleport to the freaking pressureplate and start again.
         Bukkit.getPlayer(uuid).teleport(tempLoc);
         Bukkit.getPlayer(uuid).getWorld().playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.ENDERMAN_TELEPORT,1f,1f);
@@ -90,27 +105,18 @@ public class SimpleParkour implements Parkour{
 
     @Override
     public void checkpointChecker(UUID uuid) {
-        if(Bukkit.getPlayer(uuid).getLocation().getBlock().getType() == Material.GOLD_PLATE){
-            /*
-            if(checkpoints.contains(Bukkit.getPlayer(uuid).getLocation())){
-                for(int i = 0; i < checkpoints.size();i++){
-                    if(checkpoints.get(i).equals(Bukkit.getPlayer(uuid).getLocation())){
-                        Bukkit.getPlayer(uuid).getLocation()
-                                .getWorld()
-                                .playSound(Bukkit.getPlayer(uuid).getLocation(), Sound.NOTE_PLING,2f,1f);
-                        Bukkit.getPlayer(uuid).sendMessage(ChatColor.translateAlternateColorCodes(
-                                '&',"&bCheckpoint " +
-                                        i + "/" +
-                                        checkpoints.size() + " reached!"));
-                        break;
-                    }
+        if(Bukkit.getPlayer(uuid).getLocation().getBlock().getType() == Material.IRON_PLATE){
+            Location playerLoc = Bukkit.getPlayer(uuid).getLocation();
+            int var = 0;
+            for(Location location : checkpoints){
+                if(location.getBlockX() == playerLoc.getBlockX() && location.getBlockY() == playerLoc.getBlockY() && location.getBlockZ() == playerLoc.getBlockZ()){
+                    getPlayerCheckpoint().put(uuid,location);
+                    Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&aCheckpoint &e" + var + " &areached!"));
+                    Bukkit.getPlayer(uuid).playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.NOTE_PLING,1.5f,1f);
+                    return;
                 }
-            }else if(Bukkit.getPlayer(uuid).getLocation().equals(finish)){
-                finish(uuid);
+                var++;
             }
-
-             */
-            //TODO fix check of locations.
             finish(uuid);
         }
     }
@@ -135,7 +141,7 @@ public class SimpleParkour implements Parkour{
     @Override
     public void checkPlayerPosition(UUID uuid) {
         if(Bukkit.getPlayer(uuid).getLocation().getY()-10 > start.getY()){
-            endParkour(uuid);
+            endParkour(uuid,false);
         }
     }
 
@@ -158,8 +164,7 @@ public class SimpleParkour implements Parkour{
         Bukkit.getPlayer(uuid).teleport(tempLoc);
         Bukkit.getPlayer(uuid).getWorld().playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.ENDERMAN_TELEPORT,1f,1f);
 
-        playersList.remove(uuid);
-        counterRunnableMap.remove(uuid);
+
 
         Bukkit.getPlayer(uuid).setAllowFlight(getHasFlight().get(uuid));
         getHasFlight().remove(uuid);
@@ -170,6 +175,40 @@ public class SimpleParkour implements Parkour{
             Bukkit.getPlayer(uuid).updateInventory();
             currentItems.remove(uuid);
         }
+
+        double prevBest;
+        File file = new File(ParkourSystem.getInstance().getPathToPManager());
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+
+        Player player = Bukkit.getPlayer(uuid);
+
+        if(yaml.get("parkours."+getName() + ".runs." + Bukkit.getPlayer(uuid).getName()) != null){
+            prevBest = yaml.getDouble("parkours."+getName() + ".runs." + Bukkit.getPlayer(uuid).getName());
+            if(getPlayerList().get(uuid) < prevBest){
+                yaml.set("parkours."+getName() + ".runs." + Bukkit.getPlayer(uuid).getName(),getPlayerList().get(uuid));
+                player.sendMessage(" ");
+                player.sendMessage(Utils.translate("&eNew record!"));
+                player.sendMessage(" ");
+            }else{
+                player.sendMessage(" ");
+                player.sendMessage(Utils.translate("&eYour best is &a" + prevBest));
+                player.sendMessage(" ");
+            }
+        }else{
+            yaml.set("parkours."+getName() + ".runs." + Bukkit.getPlayer(uuid).getName(),getPlayerList().get(uuid));
+            player.sendMessage(" ");
+            player.sendMessage(Utils.translate("&eNew record!"));
+            player.sendMessage(" ");
+            try {
+                yaml.save(file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        playersList.remove(uuid);
+        counterRunnableMap.remove(uuid);
+
     }
 
     @Override
@@ -243,11 +282,15 @@ public class SimpleParkour implements Parkour{
     }
 
     @Override
-    public void removePlayer(UUID uuid) {
-        endParkour(uuid);
+    public void removePlayer(UUID uuid, boolean flying) {
+        endParkour(uuid, flying);
     }
 
     public Map<UUID, Boolean> getHasFlight() {
         return hasFlight;
+    }
+
+    public Map<UUID, Location> getPlayerCheckpoint() {
+        return playerCheckpoint;
     }
 }

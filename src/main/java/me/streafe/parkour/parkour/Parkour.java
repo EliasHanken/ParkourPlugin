@@ -28,5 +28,6 @@ public interface Parkour{
     void setName(String name);
     void giveReward(UUID uuid);
     void addPlayer(UUID uuid);
-    void removePlayer(UUID uuid);
+    void removePlayer(UUID uuid,boolean flying);
+    Map<UUID,Location> getPlayerCheckpoint();
 }
