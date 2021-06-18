@@ -19,8 +19,8 @@ public class LeaderBoardUpdater extends BukkitRunnable {
 
     @Override
     public void run() {
-        //Bukkit.getConsoleSender().sendMessage("Running -> " + this.getTaskId() + " : " +
-        //        ParkourSystem.getInstance().getParkourManager().getParkourByName(this.leaderboardObject.getParkourName()).getName() +"\n");
+        Bukkit.getConsoleSender().sendMessage("Running -> " + this.getTaskId() + " : " +
+                ParkourSystem.getInstance().getParkourManager().getParkourByName(this.leaderboardObject.getParkourName()).getName() +"\n");
         if(!stop){
             this.leaderboardObject.update();
         }

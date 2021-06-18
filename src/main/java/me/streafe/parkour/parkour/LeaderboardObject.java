@@ -96,7 +96,7 @@ public class LeaderboardObject {
         for (String s : text) {
             createArmorstandFlickerFree(s, loc.subtract(0, 0.25, 0));
         }
-        createArmorstandFlickerFree("&7*",loc.subtract(0,0.25,0));
+
 
         if(text.size() == 0){
             for(Entity entity : this.location.getWorld().getNearbyEntities(this.location,3d,3d,3d)){
@@ -107,6 +107,8 @@ public class LeaderboardObject {
                     }
                 }
             }
+        }else{
+            createArmorstandFlickerFree("&7*",loc.subtract(0,0.25,0));
         }
     }
 
