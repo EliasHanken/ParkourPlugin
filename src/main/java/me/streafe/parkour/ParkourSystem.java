@@ -1,5 +1,6 @@
 package me.streafe.parkour;
 
+import me.streafe.parkour.parkour.LeaderBoardUpdater;
 import me.streafe.parkour.parkour.ParkourCommand;
 import me.streafe.parkour.parkour.ParkourManager;
 import me.streafe.parkour.utils.Utils;
@@ -7,18 +8,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ParkourSystem extends JavaPlugin {
 
     private static ParkourSystem instance;
     private ParkourManager parkourManager;
 
+
     @Override
     public void onEnable(){
         //initialize instance & fix config
         instance = this;
-
-        this.parkourManager = new ParkourManager();
         getConfig().options().copyDefaults(true);
         saveConfig();
 
@@ -35,9 +37,10 @@ public class ParkourSystem extends JavaPlugin {
             }
         }
 
-        getServer().getPluginManager().registerEvents(new ParkourManager(),this);
+        getServer().getPluginManager().registerEvents(ParkourManager.getInstance(),this);
         getCommand("parkour").setExecutor(new ParkourCommand());
 
+        this.parkourManager = ParkourManager.getInstance();
 
     }
 

@@ -1,23 +1,21 @@
 package me.streafe.parkour.parkour;
 
 import me.streafe.parkour.ParkourSystem;
-import me.streafe.parkour.parkour.Parkour;
 import me.streafe.parkour.utils.CounterRunnable;
 import me.streafe.parkour.utils.PacketUtils;
 import me.streafe.parkour.utils.Utils;
+import net.md_5.bungee.api.chat.ClickEvent;
 import org.bukkit.*;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 public class SimpleParkour implements Parkour{
@@ -26,16 +24,17 @@ public class SimpleParkour implements Parkour{
     private Location finish;
     private Location start;
     private String name;
-    private LeaderboardObject leaderboardObject;
+    private LeaderboardObject leaderboardObject = null;
 
     private Map<UUID,Double> playersList;
     private Map<UUID,BukkitTask> counterRunnableMap;
     private Map<UUID,Boolean> hasFlight;
     private Map<UUID,Location> playerCheckpoint;
+    private Map<UUID,Long> longValues;
 
     private Map<UUID,ItemStack[]> currentItems;
 
-    public SimpleParkour(Location start, List<Location> checkpoints, Location finish, String name){
+    public SimpleParkour(Location start, List<Location> checkpoints, Location finish, String name, Location lbLoc){
         if(checkpoints == null){
             this.checkpoints = new ArrayList<>();
         }else{
@@ -49,9 +48,15 @@ public class SimpleParkour implements Parkour{
         this.playerCheckpoint = new HashMap<>();
         this.name = name;
         this.currentItems = new HashMap<>();
-
-        Location leaderboardLoc = new Location(start.getWorld(),start.getX()+2,start.getY()+1.5,start.getZ()+2);
-        this.leaderboardObject = new LeaderboardObject(leaderboardLoc,name);
+        this.longValues = new HashMap<>();
+        if(start != null && lbLoc == null){
+            Location leaderboardLoc = new Location(start.getWorld(),start.getX()+2,start.getY()+1.5,start.getZ()+2);
+            this.leaderboardObject = new LeaderboardObject(leaderboardLoc, name);
+        }else if(lbLoc != null){
+            this.leaderboardObject = new LeaderboardObject(lbLoc,name);
+        }else{
+            this.leaderboardObject = null;
+        }
 
     }
 
@@ -106,20 +111,36 @@ public class SimpleParkour implements Parkour{
 
     @Override
     public void checkpointChecker(UUID uuid) {
-        if(Bukkit.getPlayer(uuid).getLocation().getBlock().getType() == Material.IRON_PLATE){
+        if (Bukkit.getPlayer(uuid).getLocation().getBlock().getType() == Material.IRON_PLATE) {
             Location playerLoc = Bukkit.getPlayer(uuid).getLocation();
             int var = 0;
-            for(Location location : checkpoints){
-                if(location.getBlockX() == playerLoc.getBlockX() && location.getBlockY() == playerLoc.getBlockY() && location.getBlockZ() == playerLoc.getBlockZ()){
-                    getPlayerCheckpoint().put(uuid,location);
+            for (Location location : checkpoints) {
+                if (location.getBlockX() == playerLoc.getBlockX() && location.getBlockY() == playerLoc.getBlockY() && location.getBlockZ() == playerLoc.getBlockZ()) {
+                    getPlayerCheckpoint().put(uuid, location);
                     Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&aCheckpoint &e" + var + " &areached!"));
-                    Bukkit.getPlayer(uuid).playSound(Bukkit.getPlayer(uuid).getLocation(),Sound.NOTE_PLING,1.5f,1f);
+                    Bukkit.getPlayer(uuid).playSound(Bukkit.getPlayer(uuid).getLocation(), Sound.NOTE_PLING, 1.5f, 1f);
                     return;
                 }
                 var++;
             }
+
+        } else if (Bukkit.getPlayer(uuid).getLocation().getBlock().getType() == Material.GOLD_PLATE) {
+
+            double value;
+            Long timeMili = getLongValues().get(uuid);
+
+            try{
+                value = (System.nanoTime() - timeMili)/1e9;
+            }catch (Exception e){
+                e.printStackTrace();
+                value = 0.0;
+            }
+
+            ParkourSystem.getInstance().getParkourManager().getParkourByPlayerUUID(uuid).getPlayerList().put(uuid, new BigDecimal(value).setScale(4, RoundingMode.DOWN).doubleValue());
             finish(uuid);
         }
+
+
     }
 
     @Override
@@ -141,9 +162,10 @@ public class SimpleParkour implements Parkour{
 
     @Override
     public void checkPlayerPosition(UUID uuid) {
-        if(Bukkit.getPlayer(uuid).getLocation().getY()-10 > start.getY()){
-            endParkour(uuid,false);
+        if (Bukkit.getPlayer(uuid).getLocation().getY() - 10 > start.getY()) {
+            endParkour(uuid, false);
         }
+
     }
 
     @Override
@@ -312,11 +334,47 @@ public class SimpleParkour implements Parkour{
 
     @Override
     public void setLeaderboard(Location location) {
-
+        this.leaderboardObject.setLocation(location);
     }
 
     @Override
     public Location getLeaderboardLoc() {
         return this.leaderboardObject.getLocation();
+    }
+
+    @Override
+    public void setLeaderboardObj(LeaderboardObject leaderboardObject) {
+        this.leaderboardObject = leaderboardObject;
+    }
+
+    @Override
+    public LeaderboardObject getLeaderboardObj() {
+        return this.leaderboardObject;
+    }
+
+    @Override
+    public void parkourUpdate() {
+        getPlayerList().forEach((uuid, aDouble) -> {
+            endParkour(uuid,false);
+            Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&cThe parkour was updated, run cancelled and scores reset!"));
+        });
+
+        File file = new File(ParkourSystem.getInstance().getPathToPManager());
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        yaml.set("parkours."+getName() + ".runs",null);
+        getLeaderboardObj().resetScores();
+        try {
+            yaml.save(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Bukkit.broadcastMessage(Utils.translate("\n&aParkour runs reset on &e'&b" + getName() + "&e' &aparkour"));
+        for(Player player : Bukkit.getOnlinePlayers()){
+            Utils.sendClickableText(player,"[Click to teleport to parkour]\n", net.md_5.bungee.api.ChatColor.GREEN,false, ClickEvent.Action.RUN_COMMAND,"/parkour tpto "+getName(),"Teleports you to the specified parkour.");
+        }
+    }
+
+    public Map<UUID, Long> getLongValues() {
+        return longValues;
     }
 }

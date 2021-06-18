@@ -15,7 +15,7 @@ import java.util.*;
 public class LeaderboardObject {
 
     private Map<String,Double> leaderBoard;
-    private final Location location;
+    private Location location;
     private LeaderBoardUpdater updater;
     private String parkourName;
     private ArmorStand armorStand;
@@ -31,7 +31,11 @@ public class LeaderboardObject {
 
         setupArmorstand();
 
-        updater.runTaskTimer(ParkourSystem.getInstance(),0L,40L);
+        try{
+            Bukkit.getScheduler().isCurrentlyRunning(updater.getTaskId());
+        }catch (Exception e){
+            updater.runTaskTimer(ParkourSystem.getInstance(),0L,40L);
+        }
     }
 
     public void setupArmorstand(){
@@ -47,7 +51,7 @@ public class LeaderboardObject {
         ParkourSystem.getInstance().getServer().getConsoleSender().sendMessage("New armorstand created, initialized as leaderboard");
 
 
-        this.armorStand.setCustomName(Utils.translate("&aLeaderboard"));
+        this.armorStand.setCustomName(Utils.translate("&a&lLeaderboard"));
         this.armorStand.setCustomNameVisible(true);
         this.armorStand.setGravity(false);
         this.armorStand.setVisible(false);
@@ -65,10 +69,14 @@ public class LeaderboardObject {
     }
 
     public Location getLocation() {
-        return location;
+        return this.location;
     }
 
     public void update() {
+        if(this.updater.stop){
+            return;
+        }
+
         File file = new File(ParkourSystem.getInstance().getPathToPManager());
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
 
@@ -88,6 +96,7 @@ public class LeaderboardObject {
         for (String s : text) {
             createArmorstandFlickerFree(s, loc.subtract(0, 0.25, 0));
         }
+        createArmorstandFlickerFree("&7*",loc.subtract(0,0.25,0));
 
         if(text.size() == 0){
             for(Entity entity : this.location.getWorld().getNearbyEntities(this.location,3d,3d,3d)){
@@ -134,5 +143,21 @@ public class LeaderboardObject {
         armorStand.setCustomName(Utils.translate(name));
         armorStand.setCustomNameVisible(true);
         armorStand.setGravity(false);
+    }
+
+    public void setLocation(Location location){
+        this.location = location;
+    }
+
+    public LeaderBoardUpdater getUpdater(){
+        return this.updater;
+    }
+
+    public String getParkourName(){
+        return this.parkourName;
+    }
+
+    public void resetScores(){
+        getLeaderBoard().clear();
     }
 }

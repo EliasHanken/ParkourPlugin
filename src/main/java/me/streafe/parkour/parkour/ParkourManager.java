@@ -2,6 +2,7 @@ package me.streafe.parkour.parkour;
 
 import me.streafe.parkour.ParkourSystem;
 import me.streafe.parkour.utils.Utils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -23,17 +24,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ParkourManager implements Listener{
 
+    private static ParkourManager singleton = null;
+
     public List<Parkour> parkourList;
     public Map<UUID,Parkour> tempList;
 
-    public ParkourManager(){
+    private ParkourManager(){
         this.parkourList = new ArrayList<>();
         this.tempList = new HashMap<>();
-        try{
-            addSavedParkours();
-        }catch (Exception e){
-            e.printStackTrace();
+        addSavedParkours();
+    }
+
+    public static ParkourManager getInstance(){
+        if(singleton == null){
+            singleton = new ParkourManager();
         }
+        return singleton;
     }
 
 
@@ -49,6 +55,7 @@ public class ParkourManager implements Listener{
                 String name = "";
                 Location start = null;
                 Location finish = null;
+                Location lb = null;
                 List<Location> checkPoints = new ArrayList<>();
                 for(String s : yaml.getConfigurationSection("parkours." + string).getKeys(false)){
 
@@ -67,8 +74,11 @@ public class ParkourManager implements Listener{
                             checkPoints.add(Utils.readLocFromString(yaml.getString("parkours." + string + "." + s + "." + checkP)));
                         }
                     }
+                    if(s.equalsIgnoreCase("leaderboard")){
+                        lb = Utils.readLocFromString(yaml.getString("parkours." + string + "." + s));
+                    }
                 }
-                getParkourList().add(new SimpleParkour(start,checkPoints,finish,name));
+                getParkourList().add(new SimpleParkour(start,checkPoints,finish,name,lb));
             }
         }
     }
@@ -80,6 +90,7 @@ public class ParkourManager implements Listener{
             yaml.set("parkours." + parkour.getName() + ".startPoint",Utils.locationToString(parkour.getStart()));
             yaml.set("parkours." + parkour.getName() + ".finishPoint",Utils.locationToString(parkour.getFinish()));
             yaml.set("parkours." + parkour.getName() + ".name",parkour.getName());
+            yaml.set("parkours." + parkour.getName() + ".leaderboard",Utils.locationToString(parkour.getLeaderboardLoc()));
             List<String> checkpoints = new ArrayList<>();
             parkour.getCheckpoints().forEach(e ->{
                 checkpoints.add(Utils.locationToString(e));
@@ -89,7 +100,6 @@ public class ParkourManager implements Listener{
             }
             yaml.options().configuration().save(file);
         }
-
     }
 
     public Parkour getParkourByCreator(UUID uuid){
@@ -111,6 +121,7 @@ public class ParkourManager implements Listener{
     }
 
     public void addParkour(Parkour parkour, Player creator){
+        creator.sendMessage(Utils.translate("&aSet a leaderboard loc for custom placement :)"));
         if(parkour.getCheckpoints() == null){
             creator.sendMessage(Utils.translate("&cNo checkpoints added, add them before saving."));
             return;
@@ -124,12 +135,18 @@ public class ParkourManager implements Listener{
             creator.sendMessage(Utils.translate("&cNo finish location found! Set one before saving."));
             return;
         }
+        boolean isTemp = false;
         for(Parkour parkour1 : parkourList){
             if(parkour1.getName().equalsIgnoreCase(parkour.getName())){
-                creator.sendMessage(Utils.translate("&cA parkour with that name already exists."));
-                return;
+                if(getTempList().containsValue(parkour1)){
+                    isTemp = true;
+                }else{
+                    creator.sendMessage(Utils.translate("&cA parkour with that name already exists."));
+                    return;
+                }
             }
         }
+        deleteParkour(parkour.getName());
         ParkourSystem.getInstance().getParkourManager().parkourList.add(parkour);
         creator.sendMessage(Utils.translate("&aParkour &b" + parkour.getName() + " &asuccessfully saved."));
         creator.getLocation().getWorld().playSound(creator.getLocation(), Sound.NOTE_PLING,2f,1f);
@@ -140,7 +157,7 @@ public class ParkourManager implements Listener{
     public void onPlayerMoveStart(PlayerInteractEvent ev){
         if(ParkourSystem.getInstance().getParkourManager().isInParkour(ev.getPlayer().getUniqueId())){
             if(ev.getAction().equals(Action.PHYSICAL)){
-                if(ev.getClickedBlock().getType() == Material.IRON_PLATE){
+                if(ev.getClickedBlock().getType() == Material.IRON_PLATE || ev.getClickedBlock().getType() == Material.GOLD_PLATE){
                     if(ParkourSystem.getInstance().getParkourManager().getParkourList().size() > 0){
                         ParkourSystem.getInstance().getParkourManager().getParkourList().forEach(e -> {
                             if(e.getPlayerList().containsKey(ev.getPlayer().getUniqueId())){

@@ -1,8 +1,13 @@
 package me.streafe.parkour.utils;
 
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -110,4 +115,21 @@ public class Utils {
                     sourceFile);
         }
     }
+
+    public static void sendClickableText(Player player, String clickableText, net.md_5.bungee.api.ChatColor color, boolean bold, ClickEvent.Action action, String value, String hoverText){
+        TextComponent component = new TextComponent(clickableText);
+        component.setColor(color);
+        component.setBold(bold);
+        component.setClickEvent(new ClickEvent(action, value));
+        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new ComponentBuilder(hoverText).color(net.md_5.bungee.api.ChatColor.YELLOW).create()));
+        player.spigot().sendMessage(component);
+    }
+
+    public static TextComponent clickableText(String clickableText, ClickEvent.Action action, String value, String hoverText){
+        TextComponent component = new TextComponent(Utils.translate(clickableText));
+        component.setClickEvent(new ClickEvent(action, value));
+        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new ComponentBuilder(hoverText).color(net.md_5.bungee.api.ChatColor.YELLOW).create()));
+        return component;
+    }
+
 }

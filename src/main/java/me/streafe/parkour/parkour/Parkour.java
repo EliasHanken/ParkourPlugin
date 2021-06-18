@@ -32,4 +32,8 @@ public interface Parkour{
     Map<UUID,Location> getPlayerCheckpoint();
     void setLeaderboard(Location location);
     Location getLeaderboardLoc();
+    void setLeaderboardObj(LeaderboardObject leaderboardObject);
+    LeaderboardObject getLeaderboardObj();
+    void parkourUpdate();
+    Map<UUID,Long> getLongValues();
 }

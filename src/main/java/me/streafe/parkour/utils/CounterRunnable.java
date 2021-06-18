@@ -20,15 +20,34 @@ public class CounterRunnable extends BukkitRunnable {
      */
     @Override
     public void run() {
+        if(timeD == 0.0){
+            ParkourSystem.getInstance().getParkourManager().getParkourByPlayerUUID(player.getUniqueId()).getLongValues().put(player.getUniqueId(),System.nanoTime());
+        }
         timeD = Utils.round(timeD+0.1,2);
-            PacketUtils.sendActionBarMessage(player,Utils.translate("&e" + Utils.round(timeD,2)));
-            ParkourSystem.getInstance().getParkourManager().getParkourByPlayerUUID(player.getUniqueId()).getPlayerList().put(player.getUniqueId(),timeD);
+
+        /*
+            String value;
+
+            try{
+                value = (System.nanoTime() - timeMili) / 1000000000 + "." + String.valueOf((System.nanoTime() - timeMili) / 100000).substring(1,4);
+            }catch (Exception e){
+                value = 0.0+"";
+            }
+
+
+
+            ParkourSystem.getInstance().getParkourManager().getParkourByPlayerUUID(player.getUniqueId()).getPlayerList().put(player.getUniqueId(),Utils.round(Double.parseDouble(value),3));
+            player.sendMessage(value);
+            */
 
             if(player.getLocation().getBlock().getType() == Material.GOLD_PLATE){
                 if(ParkourSystem.getInstance().getParkourManager().getParkourList().size() > 0){
                     ParkourSystem.getInstance().getParkourManager().getParkourByPlayerUUID(player.getUniqueId()).checkpointChecker(player.getUniqueId());
                 }
             }
+
+
+        PacketUtils.sendActionBarMessage(player,Utils.translate("&e" + Utils.round(timeD,2)));
     }
 
 }
