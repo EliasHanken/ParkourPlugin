@@ -32,7 +32,7 @@ public class ParkourCommand implements CommandExecutor {
                             }
                         }
 
-                        parkourManager.getTempList().put(player.getUniqueId(),new SimpleParkour(null,null,null,args[1]));
+                        parkourManager.getTempList().put(player.getUniqueId(),new SimpleParkour(null,null,null,args[1],null));
                         player.sendMessage(Utils.translate("&aParkour added to temp list"));
                         return true;
                     }
@@ -42,6 +42,17 @@ public class ParkourCommand implements CommandExecutor {
                         if(parkourManager.playerTempMode(player.getUniqueId()) && parkourManager.getParkourByCreator(player.getUniqueId()).getName().equalsIgnoreCase(args[1])){
                             parkourManager.getTempList().get(player.getUniqueId()).setStart(player.getLocation());
                             player.sendMessage(Utils.translate("&aStarting point set for the parkour named " + parkour.getName()));
+                        }else{
+                            player.sendMessage(Utils.translate("&cYou currently don't have any ongoing parkours with that name to be changed."));
+                        }
+                        return true;
+                    }
+
+                    else if(args[0].equalsIgnoreCase("setLeaderboard")){
+                        Parkour parkour = parkourManager.getTempList().get(player.getUniqueId());
+                        if(parkourManager.playerTempMode(player.getUniqueId()) && parkourManager.getParkourByCreator(player.getUniqueId()).getName().equalsIgnoreCase(args[1])){
+                            parkourManager.getTempList().get(player.getUniqueId()).setLeaderboard(player.getLocation());
+                            player.sendMessage(Utils.translate("&aLeaderboard set for the parkour named " + parkour.getName()));
                         }else{
                             player.sendMessage(Utils.translate("&cYou currently don't have any ongoing parkours with that name to be changed."));
                         }

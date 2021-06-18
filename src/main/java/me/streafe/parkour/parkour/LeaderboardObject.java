@@ -102,6 +102,9 @@ public class LeaderboardObject {
     }
 
     public void createArmorstand(String name, Location lc){
+        if(ParkourSystem.getInstance().getParkourManager().getParkourByName(parkourName) == null){
+            return;
+        }
         for(Entity entity : this.location.getWorld().getNearbyEntities(this.location,3d,3d,3d)){
             if(entity instanceof ArmorStand){
                 if(entity.getLocation().equals(lc)){
@@ -119,6 +122,9 @@ public class LeaderboardObject {
     }
 
     public void createArmorstandFlickerFree(String name, Location lc){
+        if(ParkourSystem.getInstance().getParkourManager().getParkourByName(parkourName) == null){
+            return;
+        }
         ArmorStand armorStand = null;
         for(Entity entity : this.location.getWorld().getNearbyEntities(this.location,1d,1d,1d)){
             if(entity instanceof ArmorStand){

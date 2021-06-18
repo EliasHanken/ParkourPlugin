@@ -29,6 +29,7 @@ public class ParkourManager implements Listener{
     public ParkourManager(){
         this.parkourList = new ArrayList<>();
         this.tempList = new HashMap<>();
+
         try{
             addSavedParkours();
         }catch (Exception e){
@@ -49,26 +50,32 @@ public class ParkourManager implements Listener{
                 String name = "";
                 Location start = null;
                 Location finish = null;
+                Location leaderboard = null;
                 List<Location> checkPoints = new ArrayList<>();
                 for(String s : yaml.getConfigurationSection("parkours." + string).getKeys(false)){
-
                     if(s.equalsIgnoreCase("name")){
                         name = yaml.getString("parkours." + string + "." + s);
                     }
-                    if(s.equalsIgnoreCase("startPoint")){
+                    else if(s.equalsIgnoreCase("startPoint")){
                         start = Utils.readLocFromString(yaml.getString("parkours." + string + "." + s));
                     }
-                    if(s.equalsIgnoreCase("finishPoint")){
+                    else if(s.equalsIgnoreCase("finishPoint")){
                         finish = Utils.readLocFromString(yaml.getString("parkours." + string + "." + s));
                     }
-                    if(s.equalsIgnoreCase("checkPoints")){
+                    else if(s.equalsIgnoreCase("leaderboard")){
+                        leaderboard = Utils.readLocFromString(yaml.getString("parkours." + string + "." + s));
+                    }
+                    else if(s.equalsIgnoreCase("checkPoints")){
                         for(String checkP : yaml.getConfigurationSection("parkours." + string + "." + s).getKeys(false)){
                             //ParkourSystem.getInstance().getServer().getConsoleSender().sendMessage(Utils.readLocFromString(yaml.getString("parkours." + string + "." + s + "." + checkP)).toString());
                             checkPoints.add(Utils.readLocFromString(yaml.getString("parkours." + string + "." + s + "." + checkP)));
                         }
                     }
                 }
-                getParkourList().add(new SimpleParkour(start,checkPoints,finish,name));
+
+                Parkour parkour = new SimpleParkour(start,checkPoints,finish,name,leaderboard);
+                parkour.setLeaderboardObject(new LeaderboardObject(leaderboard,parkour.getName()));
+                parkourList.add(parkour);
             }
         }
     }
@@ -80,6 +87,7 @@ public class ParkourManager implements Listener{
             yaml.set("parkours." + parkour.getName() + ".startPoint",Utils.locationToString(parkour.getStart()));
             yaml.set("parkours." + parkour.getName() + ".finishPoint",Utils.locationToString(parkour.getFinish()));
             yaml.set("parkours." + parkour.getName() + ".name",parkour.getName());
+            yaml.set("parkours." + parkour.getName() + ".leaderboard",Utils.locationToString(parkour.getLeaderboardLoc()));
             List<String> checkpoints = new ArrayList<>();
             parkour.getCheckpoints().forEach(e ->{
                 checkpoints.add(Utils.locationToString(e));
@@ -123,6 +131,9 @@ public class ParkourManager implements Listener{
         }else if(parkour.getFinish() == null){
             creator.sendMessage(Utils.translate("&cNo finish location found! Set one before saving."));
             return;
+        }else if(parkour.getLeaderboardLoc() == null){
+            creator.sendMessage(Utils.translate("&cNo leaderboard location found!"));
+            return;
         }
         for(Parkour parkour1 : parkourList){
             if(parkour1.getName().equalsIgnoreCase(parkour.getName())){
@@ -134,6 +145,8 @@ public class ParkourManager implements Listener{
         creator.sendMessage(Utils.translate("&aParkour &b" + parkour.getName() + " &asuccessfully saved."));
         creator.getLocation().getWorld().playSound(creator.getLocation(), Sound.NOTE_PLING,2f,1f);
         ParkourSystem.getInstance().getParkourManager().tempList.remove(creator.getUniqueId());
+
+        ParkourSystem.getInstance().getParkourManager().getParkourByName(parkour.getName()).setLeaderboardObject(new LeaderboardObject(parkour.getLeaderboardLoc(), parkour.getName()));
     }
 
     @EventHandler

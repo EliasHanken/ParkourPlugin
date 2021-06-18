@@ -27,6 +27,7 @@ public class SimpleParkour implements Parkour{
     private Location start;
     private String name;
     private LeaderboardObject leaderboardObject;
+    private Location leaderboardLocation;
 
     private Map<UUID,Double> playersList;
     private Map<UUID,BukkitTask> counterRunnableMap;
@@ -35,7 +36,7 @@ public class SimpleParkour implements Parkour{
 
     private Map<UUID,ItemStack[]> currentItems;
 
-    public SimpleParkour(Location start, List<Location> checkpoints, Location finish, String name){
+    public SimpleParkour(Location start, List<Location> checkpoints, Location finish, String name, Location leaderboardLoc){
         if(checkpoints == null){
             this.checkpoints = new ArrayList<>();
         }else{
@@ -49,10 +50,8 @@ public class SimpleParkour implements Parkour{
         this.playerCheckpoint = new HashMap<>();
         this.name = name;
         this.currentItems = new HashMap<>();
-
-        Location leaderboardLoc = new Location(start.getWorld(),start.getX()+2,start.getY()+1.5,start.getZ()+2);
-        this.leaderboardObject = new LeaderboardObject(leaderboardLoc,name);
-
+        this.leaderboardObject = new LeaderboardObject(leaderboardLocation,name);
+        this.leaderboardLocation = leaderboardLoc;
     }
 
     @Override
@@ -118,6 +117,7 @@ public class SimpleParkour implements Parkour{
                 }
                 var++;
             }
+        }else if(Bukkit.getPlayer(uuid).getLocation().getBlock().getType() == Material.GOLD_PLATE){
             finish(uuid);
         }
     }
@@ -312,11 +312,21 @@ public class SimpleParkour implements Parkour{
 
     @Override
     public void setLeaderboard(Location location) {
-
+        this.leaderboardLocation = location;
     }
 
     @Override
     public Location getLeaderboardLoc() {
-        return this.leaderboardObject.getLocation();
+        return this.leaderboardLocation;
+    }
+
+    @Override
+    public LeaderboardObject getLeaderboardObject() {
+        return this.leaderboardObject;
+    }
+
+    @Override
+    public void setLeaderboardObject(LeaderboardObject leaderboardObject) {
+        this.leaderboardObject = leaderboardObject;
     }
 }
