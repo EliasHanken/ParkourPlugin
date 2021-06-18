@@ -30,4 +30,6 @@ public interface Parkour{
     void addPlayer(UUID uuid);
     void removePlayer(UUID uuid,boolean flying);
     Map<UUID,Location> getPlayerCheckpoint();
+    void setLeaderboard(Location location);
+    Location getLeaderboardLoc();
 }

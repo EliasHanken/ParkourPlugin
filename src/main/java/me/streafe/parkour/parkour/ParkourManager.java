@@ -6,6 +6,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -136,18 +138,21 @@ public class ParkourManager implements Listener{
 
     @EventHandler
     public void onPlayerMoveStart(PlayerInteractEvent ev){
-        if(ev.getAction().equals(Action.PHYSICAL)){
-            if(ev.getClickedBlock().getType() == Material.IRON_PLATE){
-                if(ParkourSystem.getInstance().getParkourManager().getParkourList().size() > 0){
-                    ParkourSystem.getInstance().getParkourManager().getParkourList().forEach(e -> {
-                        if(e.getPlayerList().containsKey(ev.getPlayer().getUniqueId())){
-                            e.startParkourChecker(ev.getPlayer().getUniqueId());
-                            e.checkpointChecker(ev.getPlayer().getUniqueId());
-                        }
-                    });
+        if(ParkourSystem.getInstance().getParkourManager().isInParkour(ev.getPlayer().getUniqueId())){
+            if(ev.getAction().equals(Action.PHYSICAL)){
+                if(ev.getClickedBlock().getType() == Material.IRON_PLATE){
+                    if(ParkourSystem.getInstance().getParkourManager().getParkourList().size() > 0){
+                        ParkourSystem.getInstance().getParkourManager().getParkourList().forEach(e -> {
+                            if(e.getPlayerList().containsKey(ev.getPlayer().getUniqueId())){
+                                e.startParkourChecker(ev.getPlayer().getUniqueId());
+                                e.checkpointChecker(ev.getPlayer().getUniqueId());
+                            }
+                        });
+                    }
                 }
             }
         }
+
     }
 
     @EventHandler
@@ -180,22 +185,24 @@ public class ParkourManager implements Listener{
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e){
         Player player = e.getPlayer();
-        if(e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK){
-            if(player.getItemInHand() != null){
-                if(player.getItemInHand().hasItemMeta()){
-                    if(e.getItem().getItemMeta().getDisplayName().contains("Exit parkour")){
-                        e.setCancelled(true);
-                        //getParkourByUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
-                        if(getParkourByPlayerUUID(player.getUniqueId()) != null){
-                            getParkourByPlayerUUID(player.getUniqueId()).removePlayer(player.getUniqueId(),false);
+        if(ParkourSystem.getInstance().getParkourManager().isInParkour(player.getUniqueId())){
+            if(e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK){
+                if(player.getItemInHand() != null){
+                    if(player.getItemInHand().hasItemMeta()){
+                        if(e.getItem().getItemMeta().getDisplayName().contains("Exit parkour")){
+                            e.setCancelled(true);
+                            //getParkourByUUID(player.getUniqueId()).removePlayer(player.getUniqueId());
+                            if(getParkourByPlayerUUID(player.getUniqueId()) != null){
+                                getParkourByPlayerUUID(player.getUniqueId()).removePlayer(player.getUniqueId(),false);
+                            }
+                        }else if(e.getItem().getItemMeta().getDisplayName().contains("Last checkpoint")){
+                            e.setCancelled(true);
+                            if(getParkourByPlayerUUID(player.getUniqueId()).getPlayerCheckpoint().get(player.getUniqueId()) != null){
+                                player.teleport(getParkourByPlayerUUID(player.getUniqueId()).getPlayerCheckpoint().get(player.getUniqueId()));
+                                player.playSound(player.getLocation(),Sound.ENDERMAN_TELEPORT,1f,1f);
+                            }
+                            player.sendMessage(Utils.translate("&cCheckpoints are under development."));
                         }
-                    }else if(e.getItem().getItemMeta().getDisplayName().contains("Last checkpoint")){
-                        e.setCancelled(true);
-                        if(getParkourByPlayerUUID(player.getUniqueId()).getPlayerCheckpoint().get(player.getUniqueId()) != null){
-                            player.teleport(getParkourByPlayerUUID(player.getUniqueId()).getPlayerCheckpoint().get(player.getUniqueId()));
-                            player.playSound(player.getLocation(),Sound.ENDERMAN_TELEPORT,1f,1f);
-                        }
-                        player.sendMessage(Utils.translate("&cCheckpoints are under development."));
                     }
                 }
             }
@@ -243,16 +250,30 @@ public class ParkourManager implements Listener{
         while(iterator.hasNext()){
             Parkour parkour = iterator.next();
             if(parkour.getName().equalsIgnoreCase(name)){
+                for(Entity entity : parkour.getLeaderboardLoc().getWorld().getNearbyEntities(parkour.getLeaderboardLoc(),1d,5d,1d)){
+                    if(entity instanceof ArmorStand){
+                        entity.remove();
+                    }
+                }
+                for(Map.Entry<UUID,Double> entry : parkour.getPlayerList().entrySet()){
+                    parkour.removePlayer(entry.getKey(),false);
+                }
                 iterator.remove();
+                File file = new File(ParkourSystem.getInstance().getPathToPManager());
+                YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+                for(String s : yaml.getConfigurationSection("parkours").getKeys(false)){
+                    if(s.equalsIgnoreCase(name)){
+                        yaml.set("parkours."+s,null);
+                        try {
+                            yaml.save(file);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 return true;
             }
-            File file = new File(ParkourSystem.getInstance().getPathToPManager());
-            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-            for(String s : yaml.getConfigurationSection("parkours").getKeys(false)){
-                if(s.equalsIgnoreCase(name)){
-                    yaml.set("parkours."+s,null);
-                }
-            }
+
         }
         return false;
     }

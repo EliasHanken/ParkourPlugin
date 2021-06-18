@@ -50,8 +50,9 @@ public class SimpleParkour implements Parkour{
         this.name = name;
         this.currentItems = new HashMap<>();
 
-        Location leaderboardLoc = new Location(start.getWorld(),start.getX()+2,start.getY()+1,start.getZ()+2);
+        Location leaderboardLoc = new Location(start.getWorld(),start.getX()+2,start.getY()+1.5,start.getZ()+2);
         this.leaderboardObject = new LeaderboardObject(leaderboardLoc,name);
+
     }
 
     @Override
@@ -184,18 +185,35 @@ public class SimpleParkour implements Parkour{
 
         if(yaml.get("parkours."+getName() + ".runs." + Bukkit.getPlayer(uuid).getName()) != null){
             prevBest = yaml.getDouble("parkours."+getName() + ".runs." + Bukkit.getPlayer(uuid).getName());
+            if(getPlayerList().get(uuid) == 0.0){
+                Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&cRun not saved, did you cheat maybe?"));
+                playersList.remove(uuid);
+                counterRunnableMap.remove(uuid);
+                return;
+            }
             if(getPlayerList().get(uuid) < prevBest){
-                yaml.set("parkours."+getName() + ".runs." + Bukkit.getPlayer(uuid).getName(),getPlayerList().get(uuid));
+                yaml.set("parkours."+this.getName() + ".runs." + Bukkit.getPlayer(uuid).getName(),getPlayerList().get(uuid));
                 player.sendMessage(" ");
                 player.sendMessage(Utils.translate("&eNew record!"));
                 player.sendMessage(" ");
+                try {
+                    yaml.save(file);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }else{
                 player.sendMessage(" ");
                 player.sendMessage(Utils.translate("&eYour best is &a" + prevBest));
                 player.sendMessage(" ");
             }
         }else{
-            yaml.set("parkours."+getName() + ".runs." + Bukkit.getPlayer(uuid).getName(),getPlayerList().get(uuid));
+            if(getPlayerList().get(uuid) == 0.0){
+                Bukkit.getPlayer(uuid).sendMessage(Utils.translate("&cRun not saved, did you cheat maybe?"));
+                playersList.remove(uuid);
+                counterRunnableMap.remove(uuid);
+                return;
+            }
+            yaml.set("parkours."+this.getName() + ".runs." + Bukkit.getPlayer(uuid).getName(),getPlayerList().get(uuid));
             player.sendMessage(" ");
             player.sendMessage(Utils.translate("&eNew record!"));
             player.sendMessage(" ");
@@ -205,10 +223,8 @@ public class SimpleParkour implements Parkour{
                 e.printStackTrace();
             }
         }
-
         playersList.remove(uuid);
         counterRunnableMap.remove(uuid);
-
     }
 
     @Override
@@ -292,5 +308,15 @@ public class SimpleParkour implements Parkour{
 
     public Map<UUID, Location> getPlayerCheckpoint() {
         return playerCheckpoint;
+    }
+
+    @Override
+    public void setLeaderboard(Location location) {
+
+    }
+
+    @Override
+    public Location getLeaderboardLoc() {
+        return this.leaderboardObject.getLocation();
     }
 }

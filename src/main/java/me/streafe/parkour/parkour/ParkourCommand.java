@@ -103,11 +103,6 @@ public class ParkourCommand implements CommandExecutor {
                     else if(args[0].equalsIgnoreCase("delete")) {
                         if (parkourManager.deleteParkour(args[1])) {
                             player.sendMessage(Utils.translate("&cParkour deleted -> &b" + args[1]));
-                            try {
-                                parkourManager.saveParkours();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
                         } else {
                             player.sendMessage(Utils.translate("&cParkour not deleted -> &b" + args[1] + "\n&cCould not find a parkour with that name."));
                         }
