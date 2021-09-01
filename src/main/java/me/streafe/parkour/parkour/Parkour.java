@@ -1,9 +1,6 @@
 package me.streafe.parkour.parkour;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.List;
 import java.util.Map;
