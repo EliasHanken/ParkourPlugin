@@ -21,7 +21,6 @@ public class LeaderboardObject {
     private ArmorStand armorStand;
     private List<String> text;
 
-
     public LeaderboardObject(Location location, String parkourName){
         this.leaderBoard = new HashMap<>();
         this.location = location;
@@ -34,7 +33,7 @@ public class LeaderboardObject {
         try{
             Bukkit.getScheduler().isCurrentlyRunning(updater.getTaskId());
         }catch (Exception e){
-            updater.runTaskTimer(ParkourSystem.getInstance(),0L,40L);
+            updater.runTaskTimer(ParkourSystem.getInstance(),0L,50L);
         }
     }
 
@@ -56,6 +55,7 @@ public class LeaderboardObject {
         this.armorStand.setGravity(false);
         this.armorStand.setVisible(false);
 
+        createArmorstand("&7Parkour",location.subtract(0,0.25,0));
         createArmorstand("&7(" + parkourName + ")",location.subtract(0,0.25,0));
         createArmorstand("&7-",location.subtract(0,0.25,0));
     }
@@ -145,6 +145,7 @@ public class LeaderboardObject {
         armorStand.setCustomName(Utils.translate(name));
         armorStand.setCustomNameVisible(true);
         armorStand.setGravity(false);
+
     }
 
     public void setLocation(Location location){
