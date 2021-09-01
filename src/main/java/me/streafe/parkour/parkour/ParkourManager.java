@@ -2,7 +2,6 @@ package me.streafe.parkour.parkour;
 
 import me.streafe.parkour.ParkourSystem;
 import me.streafe.parkour.utils.Utils;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -15,7 +14,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
-import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +43,15 @@ public class ParkourManager implements Listener{
 
     public List<Parkour> getList(){
         return this.parkourList;
+    }
+
+    public boolean removeTempEditor(UUID uuid){
+        if(tempList.containsKey(uuid)){
+            tempList.remove(uuid);
+            return true;
+        }else{
+            return false;
+        }
     }
 
     public void addSavedParkours(){

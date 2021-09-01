@@ -2,24 +2,17 @@ package me.streafe.parkour.parkour;
 
 import me.streafe.parkour.ParkourSystem;
 import me.streafe.parkour.utils.Utils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.UUID;
 
 public class ParkourCommand implements CommandExecutor {
@@ -118,7 +111,6 @@ public class ParkourCommand implements CommandExecutor {
                             if(contains){
                                 for(Parkour p : parkourManager.getParkourList()){
                                     if(p.getName().equals(parkour.getName())){
-                                        p.parkourUpdate();
                                         p.setName(parkour.getName());
                                         p.setLeaderboard(parkour.getLeaderboardLoc());
                                         p.setFinish(parkour.getFinish());
@@ -130,6 +122,10 @@ public class ParkourCommand implements CommandExecutor {
                                             e.printStackTrace();
                                         }
                                         player.sendMessage(Utils.translate("&aParkour &e'&b"+parkour.getName() + "&e' &awas updated!"));
+                                        p.parkourUpdate();
+                                        if(parkourManager.removeTempEditor(player.getUniqueId())){
+                                            player.sendMessage(Utils.translate("&cYou were removed from the temp editor."));
+                                        }
                                     }
                                 }
                             }else{
@@ -252,7 +248,7 @@ public class ParkourCommand implements CommandExecutor {
                         "&e/parkour &ajoin &e(name) &7joins a parkour by name.\n" +
                         "&e/parkour &7list &7shows the operational parkours.\n" +
                         "&e/parkour &7reset &7resets the scores and updates the parkour.\n" +
-                        "&e/parkour setLeaderboard &7sets the leaderboard for the top scores.\n"));
+                        "&e/parkour setLb &7sets the leaderboard for the top scores.\n"));
 
             }
         }
